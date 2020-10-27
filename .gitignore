@@ -1,0 +1,12 @@
+/*
+!.gitignore
+!wav_player.ioc
+!Core/
+Core/*
+!Core/Src/
+Core/Src/*
+!Core/Src/USB.h
+!Core/Src/USB.c
+!Core/Src/CS43L22.h
+!Core/Src/CS43L22.c
+!Core/Src/main.c
