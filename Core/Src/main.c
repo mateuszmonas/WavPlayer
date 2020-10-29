@@ -70,10 +70,21 @@ static void MX_TIM2_Init(void);
 void MX_USB_HOST_Process(void);
 
 /* USER CODE BEGIN PFP */
+void handle_user_button(){
+	static uint32_t press_time;
+	if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET){
+		press_time = HAL_GetTick();
+	} else if(300 < HAL_GetTick() - press_time){
+		stop_play();
+	} else{
+		next_song();
+	}
+}
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
-	next_song();
-	// TODO - short click go to next file
-	// TODO - long click stop or start
+	if(GPIO_Pin==GPIO_PIN_0){
+		handle_user_button();
+	}
 }
 /* USER CODE END PFP */
 
@@ -123,11 +134,11 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	process();
     /* USER CODE END WHILE */
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
+	process();
   }
   /* USER CODE END 3 */
 }
@@ -200,7 +211,7 @@ static void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  hi2c1.Init.ClockSpeed = 100000;
+  hi2c1.Init.ClockSpeed = 400000;
   hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
@@ -345,7 +356,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : PA0 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 

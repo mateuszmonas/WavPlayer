@@ -19,22 +19,22 @@ void CS43L22_hi2cx_init(){
 	HAL_I2C_Init(&hi2cx);
 }
 
-void CS43L22_hi2sx_init(){
+void CS43L22_hi2sx_init(uint32_t frequency){
 	hi2sx.Instance = SPI3;
 	hi2sx.Init.Mode = I2S_MODE_MASTER_TX;
 	hi2sx.Init.Standard = I2S_STANDARD_PHILIPS;
 	hi2sx.Init.DataFormat = I2S_DATAFORMAT_16B;
 	hi2sx.Init.MCLKOutput = I2S_MCLKOUTPUT_ENABLE;
-	hi2sx.Init.AudioFreq = I2S_AUDIOFREQ_11K;
+	hi2sx.Init.AudioFreq = frequency;
 	hi2sx.Init.CPOL = I2S_CPOL_LOW;
 	hi2sx.Init.ClockSource = I2S_CLOCK_PLL;
 	HAL_I2S_Init(&hi2sx);
 }
 
-void CS43L22_init(){
+void CS43L22_init(uint32_t frequency){
 	CS43L22_hi2cx_init();
-	CS43L22_hi2sx_init();
-	HAL_Delay(500);
+	CS43L22_hi2sx_init(frequency);
+
 	CS43L22_set_power(DOWN);
 	CS43L22_write(CS43L22_REGISTRY_INTERFACE_CONRTOL_1, 0x07);
 	CS43L22_enable_channel(LEFT_HEADPHONE & RIGHT_HEADPHONE);
