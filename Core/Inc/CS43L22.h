@@ -30,6 +30,4 @@ void CS43L22_enable_channel(CS43L22_CHANNEL channel);
 void CS43L22_set_power(CS43L22_POWER power);
 void CS43L22_toggle_power(void);
 void CS43L22_start(uint16_t* audio_buffer, uint32_t len, uint32_t frequency);
-void CS43L22_resume(void);
-void CS43L22_pause(void);
 void CS43L22_stop(void);

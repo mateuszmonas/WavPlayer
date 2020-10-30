@@ -2,10 +2,9 @@
 #include "usb_host.h"
 #include "USB.h"
 
-extern ApplicationTypeDef Appli_state;
 extern char USBHPath[4];
 
-static FATFS fs;
+FATFS fs;
 DIR current_dir;
 FILINFO current_file_info;
 FIL current_file;

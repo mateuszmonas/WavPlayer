@@ -74,17 +74,6 @@ void CS43L22_start(uint16_t* audio_buffer, uint32_t len, uint32_t frequency){
 	}
 }
 
-void CS43L22_resume(void){
-	HAL_I2S_DMAResume(&hi2sx);
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
-}
-
-void CS43L22_pause(void){
-	HAL_I2S_DMAPause(&hi2sx);
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
-}
-
-
 void CS43L22_stop(void){
 	if(HAL_I2S_DMAStop(&hi2sx) == HAL_OK){
 	    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
