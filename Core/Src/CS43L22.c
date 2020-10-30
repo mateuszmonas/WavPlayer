@@ -1,7 +1,5 @@
 #include "CS43L22.h"
-
 #include "stm32f4xx_hal.h"
-#include "math.h"
 
 static I2C_HandleTypeDef hi2cx;
 static I2S_HandleTypeDef hi2sx;
@@ -19,7 +17,7 @@ void CS43L22_hi2cx_init(){
 	HAL_I2C_Init(&hi2cx);
 }
 
-void CS43L22_hi2sx_init(uint32_t frequency){
+uint8_t CS43L22_set_frequency(uint32_t frequency){
 	hi2sx.Instance = SPI3;
 	hi2sx.Init.Mode = I2S_MODE_MASTER_TX;
 	hi2sx.Init.Standard = I2S_STANDARD_PHILIPS;
@@ -28,18 +26,18 @@ void CS43L22_hi2sx_init(uint32_t frequency){
 	hi2sx.Init.AudioFreq = frequency;
 	hi2sx.Init.CPOL = I2S_CPOL_LOW;
 	hi2sx.Init.ClockSource = I2S_CLOCK_PLL;
-	HAL_I2S_Init(&hi2sx);
+	hi2sx.Init.FullDuplexMode = I2S_FULLDUPLEXMODE_DISABLE;
+	return HAL_I2S_Init(&hi2sx) == HAL_OK;
 }
 
-void CS43L22_init(uint32_t frequency){
+void CS43L22_init(void){
 	CS43L22_hi2cx_init();
-	CS43L22_hi2sx_init(frequency);
 
+	HAL_GPIO_WritePin(CS43L22_AUDIO_RESET_GPIO_PORT, CS43L22_AUDIO_RESET_GPIO_PIN, GPIO_PIN_SET);
 	CS43L22_set_power(DOWN);
 	CS43L22_write(CS43L22_REGISTRY_INTERFACE_CONRTOL_1, 0x07);
 	CS43L22_enable_channel(LEFT_HEADPHONE & RIGHT_HEADPHONE);
 	CS43L22_set_power(UP);
-	HAL_GPIO_WritePin(CS43L22_AUDIO_RESET_GPIO_PORT, CS43L22_AUDIO_RESET_GPIO_PIN, GPIO_PIN_SET);
 }
 
 void CS43L22_write(uint8_t registry, uint8_t value){
@@ -70,9 +68,10 @@ void CS43L22_enable_channel(CS43L22_CHANNEL channel){
 	CS43L22_write(CS43L22_REGISTRY_POWER_CONTROL_2, channel);
 }
 
-void CS43L22_start(uint16_t* audio_buffer, uint32_t len){
-	HAL_I2S_Transmit_DMA(&hi2sx, (uint16_t*)audio_buffer, len / 2);
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
+void CS43L22_start(uint16_t* audio_buffer, uint32_t len, uint32_t frequency){
+	if(CS43L22_set_frequency(frequency) && HAL_I2S_Transmit_DMA(&hi2sx, (uint16_t*)audio_buffer, len) == HAL_OK){
+	    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
+	}
 }
 
 void CS43L22_resume(void){
@@ -87,8 +86,9 @@ void CS43L22_pause(void){
 
 
 void CS43L22_stop(void){
-	HAL_I2S_DMAStop(&hi2sx);
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
+	if(HAL_I2S_DMAStop(&hi2sx) == HAL_OK){
+	    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
+	}
 }
 
 __weak void CS43L22_half_buffer_callback(void){

@@ -17,9 +17,7 @@ int USB_read_current_file(uint8_t *buffer, uint32_t buffer_size){
 	return buffer_size - bytes_read;
 }
 
-void USB_open_next_file(void){
-	f_close(&current_file);
-	f_readdir(&current_dir, &current_file_info);
+void USB_skip_directories(){
 	while(current_file_info.fname[0] == 0 || current_file_info.fattrib & AM_DIR){
 		if(current_file_info.fname[0] == 0){
 			f_readdir(&current_dir, NULL);
@@ -28,6 +26,19 @@ void USB_open_next_file(void){
 			f_readdir(&current_dir, &current_file_info);
 		}
 	}
+}
+
+void USB_rewind_files(void){
+	f_close(&current_file);
+	f_readdir(&current_dir, NULL);
+	USB_skip_directories();
+	f_open(&current_file, current_file_info.fname, FA_READ);
+}
+
+void USB_open_next_file(void){
+	f_close(&current_file);
+	f_readdir(&current_dir, &current_file_info);
+	USB_skip_directories();
 	f_open(&current_file, current_file_info.fname, FA_READ);
 }
 
@@ -57,6 +68,7 @@ void USB_handle_state(uint8_t state){
       	  break;
 	  case HOST_USER_DISCONNECTION:
 		  mounted = 0;
+		  f_mount(NULL, (TCHAR const *)"", 0);
 		  USB_unmounted_callback();
 		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
 		  break;
