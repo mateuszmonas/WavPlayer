@@ -17,7 +17,7 @@ int USB_read_current_file(uint8_t *buffer, uint32_t buffer_size){
 }
 
 void USB_skip_directories(){
-	while(current_file_info.fname[0] == 0 || current_file_info.fattrib & AM_DIR){
+	while(current_file_info.fname[0] == 0 || (current_file_info.fattrib & AM_DIR)){
 		if(current_file_info.fname[0] == 0){
 			f_readdir(&current_dir, NULL);
 			f_readdir(&current_dir, &current_file_info);

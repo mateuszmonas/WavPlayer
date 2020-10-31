@@ -17,7 +17,9 @@ void CS43L22_hi2cx_init(){
 	HAL_I2C_Init(&hi2cx);
 }
 
-uint8_t CS43L22_set_frequency(uint32_t frequency){
+uint8_t CS43L22_set_frequency(CS43L22_DataFormatTypeDef data_format){
+	uint32_t byte_rate = data_format.num_channels * data_format.sample_rate * data_format.bit_per_sample / 8;
+	uint32_t frequency = byte_rate * 8 / 16 / 2;
 	hi2sx.Instance = SPI3;
 	hi2sx.Init.Mode = I2S_MODE_MASTER_TX;
 	hi2sx.Init.Standard = I2S_STANDARD_PHILIPS;
@@ -36,9 +38,17 @@ void CS43L22_init(void){
 	HAL_GPIO_WritePin(CS43L22_AUDIO_RESET_GPIO_PORT, CS43L22_AUDIO_RESET_GPIO_PIN, GPIO_PIN_SET);
 	CS43L22_set_power(DOWN);
 	CS43L22_write(CS43L22_REGISTRY_INTERFACE_CONRTOL_1, 0x07);
+	CS43L22_set_volume(220);
 	CS43L22_enable_channel(LEFT_HEADPHONE & RIGHT_HEADPHONE);
 	CS43L22_set_power(UP);
 }
+
+void CS43L22_set_volume(uint8_t volume){
+	volume = volume + 25;
+	CS43L22_write(CS43L22_REGISTRY_MASTER_VOLUME_CONRTOL_A, volume);
+	CS43L22_write(CS43L22_REGISTRY_MASTER_VOLUME_CONRTOL_B, volume);
+}
+
 
 void CS43L22_write(uint8_t registry, uint8_t value){
 	HAL_I2C_Mem_Write(&hi2cx, CS43L22_AUDIO_I2C_ADDR, registry, 1, &value, sizeof(value), HAL_MAX_DELAY);
@@ -68,8 +78,8 @@ void CS43L22_enable_channel(CS43L22_CHANNEL channel){
 	CS43L22_write(CS43L22_REGISTRY_POWER_CONTROL_2, channel);
 }
 
-void CS43L22_start(uint16_t* audio_buffer, uint32_t len, uint32_t frequency){
-	if(CS43L22_set_frequency(frequency) && HAL_I2S_Transmit_DMA(&hi2sx, (uint16_t*)audio_buffer, len) == HAL_OK){
+void CS43L22_start(uint16_t* audio_buffer, uint32_t len, CS43L22_DataFormatTypeDef data_format){
+	if(CS43L22_set_frequency(data_format) && HAL_I2S_Transmit_DMA(&hi2sx, (uint16_t*)audio_buffer, len) == HAL_OK){
 	    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
 	}
 }

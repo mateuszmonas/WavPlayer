@@ -75,11 +75,11 @@ void handle_user_button(){
 	if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET){
 		press_time = HAL_GetTick();
 	} else if(300 < HAL_GetTick() - press_time){
-		stop_play();
-	} else if(is_running()){
-		next_song();
+		WAV_stop_play();
+	} else if(WAV_is_running()){
+		WAV_next_song();
 	} else{
-		reset_songs();
+		WAV_reset_songs();
 	}
 }
 
@@ -134,14 +134,14 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  init(hi2c1);
+  WAV_init(hi2c1);
   while (1)
   {
     /* USER CODE END WHILE */
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
-	process();
+	WAV_process();
   }
   /* USER CODE END 3 */
 }
