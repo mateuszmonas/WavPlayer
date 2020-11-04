@@ -13,7 +13,7 @@ Core/Inc/*
 
 !Core/Src/
 Core/Src/*
-!Core/Src/WAV.h
+!Core/Src/WAV.c
 !Core/Src/USB.c
 !Core/Src/CS43L22.c
 !Core/Src/main.c
