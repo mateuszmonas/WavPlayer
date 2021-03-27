@@ -54,7 +54,7 @@ __weak void USB_unmounted_callback(void){
 }
 
 void USB_handle_state(uint8_t state){
-    switch(state){
+	switch(state){
       case HOST_USER_CONNECTION:
 		  f_mount(&fs, (TCHAR const *)USBHPath, 0);
 		  break;

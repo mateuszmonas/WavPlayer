@@ -10,6 +10,7 @@ Core/Inc/*
 !Core/Inc/USB.h
 !Core/Inc/CS43L22.h
 !Core/Inc/main.h
+!Core/Inc/LSM303DLHC.h
 
 !Core/Src/
 Core/Src/*
@@ -17,6 +18,7 @@ Core/Src/*
 !Core/Src/USB.c
 !Core/Src/CS43L22.c
 !Core/Src/main.c
+!Core/Inc/LSM303DLHC.c
 
 !USB_HOST/
 USB_HOST/*

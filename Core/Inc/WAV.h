@@ -34,7 +34,7 @@ typedef enum{
 	WAV_BUFFER_STATE_IDLE
 }WAV_BUFFER_STATE;
 
-void WAV_init(I2C_HandleTypeDef hi2c);
+void WAV_init(void);
 void WAV_start_play(void);
 void WAV_process(void);
 void WAV_next_song(void);

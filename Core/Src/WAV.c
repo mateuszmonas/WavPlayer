@@ -10,7 +10,7 @@ WAV_BUFFER_STATE current_buffer_state = WAV_BUFFER_STATE_IDLE;
 
 uint8_t running = 0;
 
-void WAV_init(I2C_HandleTypeDef hi2c){
+void WAV_init(void){
 	CS43L22_init();
 }
 

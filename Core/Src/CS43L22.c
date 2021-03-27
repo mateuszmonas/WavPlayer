@@ -49,7 +49,6 @@ void CS43L22_set_volume(uint8_t volume){
 	CS43L22_write(CS43L22_REGISTRY_MASTER_VOLUME_CONRTOL_B, volume);
 }
 
-
 void CS43L22_write(uint8_t registry, uint8_t value){
 	HAL_I2C_Mem_Write(&hi2cx, CS43L22_AUDIO_I2C_ADDR, registry, 1, &value, sizeof(value), HAL_MAX_DELAY);
 }
