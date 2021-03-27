@@ -18,7 +18,7 @@ Core/Src/*
 !Core/Src/USB.c
 !Core/Src/CS43L22.c
 !Core/Src/main.c
-!Core/Inc/LSM303DLHC.c
+!Core/Src/LSM303DLHC.c
 
 !USB_HOST/
 USB_HOST/*
