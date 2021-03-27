@@ -91,6 +91,18 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	}
 }
 
+void handle_tilt_sensor(){
+	if(lsm303dlhc_should_handle_interrupt()){
+		LSM303DLHC_TILT tilt = lsm303dlhc_get_tilt();
+		if(tilt == LSM303DLHC_TILT_RIGHT && WAV_is_running()){
+			WAV_next_song();
+		} else if(tilt == LSM303DLHC_TILT_RIGHT && !WAV_is_running()){
+			WAV_reset_songs();
+		} else {
+			WAV_stop_play();
+		}
+	}
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -140,7 +152,8 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   WAV_init();
-//  lsm303dlhc_init(hi2c1);
+  lsm303dlhc_init(hi2c1);
+  uint32_t tilt_debounce_time = HAL_GetTick();
   while (1)
   {
     /* USER CODE END WHILE */
@@ -148,16 +161,10 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	WAV_process();
-//	if(lsm303dlhc_should_handle_interrupt()){
-//		LSM303DLHC_TILT tilt = lsm303dlhc_get_tilt();
-//		if(tilt == LSM303DLHC_TILT_RIGHT && WAV_is_running()){
-//			WAV_next_song();
-//		} else if(tilt == LSM303DLHC_TILT_RIGHT && !WAV_is_running()){
-//			WAV_reset_songs();
-//		} else {
-//			WAV_stop_play();
-//		}
-//	}
+	if(100 < HAL_GetTick() - tilt_debounce_time){
+		handle_tilt_sensor();
+		tilt_debounce_time = HAL_GetTick();
+	}
   }
   /* USER CODE END 3 */
 }
