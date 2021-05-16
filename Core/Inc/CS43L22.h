@@ -41,3 +41,5 @@ void CS43L22_set_power(CS43L22_POWER power);
 void CS43L22_toggle_power(void);
 void CS43L22_start(uint16_t* audio_buffer, uint32_t len, CS43L22_DataFormatTypeDef data_format);
 void CS43L22_stop(void);
+void CS43L22_half_buffer_callback(void);
+void CS43L22_full_buffer_callback(void);

@@ -1,5 +1,4 @@
 #include "CS43L22.h"
-#include "stm32f4xx_hal.h"
 
 static I2C_HandleTypeDef hi2cx;
 static I2S_HandleTypeDef hi2sx;
@@ -78,7 +77,7 @@ void CS43L22_enable_channel(CS43L22_CHANNEL channel){
 }
 
 void CS43L22_start(uint16_t* audio_buffer, uint32_t len, CS43L22_DataFormatTypeDef data_format){
-	if(CS43L22_set_frequency(data_format) && HAL_I2S_Transmit_DMA(&hi2sx, (uint16_t*)audio_buffer, len) == HAL_OK){
+	if(CS43L22_set_frequency(data_format) && HAL_I2S_Transmit_DMA(&hi2sx, audio_buffer, len) == HAL_OK){
 	    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
 	}
 }
@@ -93,20 +92,6 @@ __weak void CS43L22_half_buffer_callback(void){
 
 }
 
-__weak void CS43L22_half_full_callback(void){
+__weak void CS43L22_full_buffer_callback(void){
 
-}
-
-void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-	if(hi2s->Instance == SPI3){
-		CS43L22_half_buffer_callback();
-	}
-}
-
-void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-	if(hi2s->Instance == SPI3){
-		CS43L22_half_full_callback();
-	}
 }

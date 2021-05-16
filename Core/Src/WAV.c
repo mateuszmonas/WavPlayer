@@ -2,13 +2,12 @@
 #include "CS43L22.h"
 #include "USB.h"
 
-#include "stm32f4xx_hal.h"
-uint8_t audio_buffer[WAV_BUFFER_SIZE];
+static uint8_t audio_buffer[WAV_BUFFER_SIZE];
 
-WAV_PLAYBACK_STATE current_playback_state = WAV_PLAYBACK_STATE_IDLE;
-WAV_BUFFER_STATE current_buffer_state = WAV_BUFFER_STATE_IDLE;
+static WAV_PLAYBACK_STATE current_playback_state = WAV_PLAYBACK_STATE_IDLE;
+static WAV_BUFFER_STATE current_buffer_state = WAV_BUFFER_STATE_IDLE;
 
-uint8_t running = 0;
+static uint8_t running = 0;
 
 void WAV_init(void){
 	CS43L22_init();
@@ -86,7 +85,7 @@ void CS43L22_half_buffer_callback(void){
 	current_buffer_state = WAV_BUFFER_STATE_HALF_BUFFER;
 }
 
-void CS43L22_half_full_callback(void){
+void CS43L22_full_buffer_callback(void){
 	current_buffer_state = WAV_BUFFER_STATE_FULL_BUFFER;
 }
 

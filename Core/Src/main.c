@@ -20,12 +20,16 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "fatfs.h"
+#include "pdm2pcm.h"
 #include "usb_host.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "WAV.h"
 #include "LSM303DLHC.h"
+#include "MP45DT02.h"
+#include "CS43L22.h"
+#include "RECOREDER.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,9 +47,13 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+CRC_HandleTypeDef hcrc;
+
 I2C_HandleTypeDef hi2c1;
 
+I2S_HandleTypeDef hi2s2;
 I2S_HandleTypeDef hi2s3;
+DMA_HandleTypeDef hdma_spi2_rx;
 DMA_HandleTypeDef hdma_spi3_tx;
 
 TIM_HandleTypeDef htim2;
@@ -68,6 +76,8 @@ static void MX_DMA_Init(void);
 static void MX_I2S3_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_I2S2_Init(void);
+static void MX_CRC_Init(void);
 static void MX_NVIC_Init(void);
 void MX_USB_HOST_Process(void);
 
@@ -78,9 +88,16 @@ void handle_user_button(){
 		press_time = HAL_GetTick();
 	} else if(300 < HAL_GetTick() - press_time){
 		WAV_stop_play();
+		if(!RECORDER_is_running()){
+			RECORDER_start();
+
+		}
 	} else if(WAV_is_running()){
 		WAV_next_song();
 	} else{
+		if(RECORDER_is_running()){
+			RECORDER_stop();
+		}
 		WAV_reset_songs();
 	}
 }
@@ -92,8 +109,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 }
 
 void handle_tilt_sensor(){
-	if(lsm303dlhc_should_handle_interrupt()){
-		LSM303DLHC_TILT tilt = lsm303dlhc_get_tilt();
+	if(LSM303DLHC_should_handle_interrupt()){
+		LSM303DLHC_TILT tilt = LSM303DLHC_get_tilt();
 		if(tilt == LSM303DLHC_TILT_RIGHT && WAV_is_running()){
 			WAV_next_song();
 		} else if(tilt == LSM303DLHC_TILT_RIGHT && !WAV_is_running()){
@@ -103,6 +120,32 @@ void handle_tilt_sensor(){
 		}
 	}
 }
+
+
+void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s) {
+	if(hi2s->Instance == SPI3){
+		CS43L22_half_buffer_callback();
+	}
+}
+
+void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)  {
+	if(hi2s->Instance == SPI3){
+		CS43L22_full_buffer_callback();
+	}
+}
+
+void HAL_I2S_RxHalfCpltCallback(I2S_HandleTypeDef *hi2s) {
+	if(hi2s->Instance == SPI2){
+		MP45DT02_half_buffer_callback();
+	}
+}
+
+void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s) {
+	if(hi2s->Instance == SPI2){
+		MP45DT02_full_buffer_callback();
+	}
+}
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -143,6 +186,9 @@ int main(void)
   MX_TIM2_Init();
   MX_FATFS_Init();
   MX_USB_HOST_Init();
+  MX_I2S2_Init();
+  MX_CRC_Init();
+  MX_PDM2PCM_Init();
 
   /* Initialize interrupts */
   MX_NVIC_Init();
@@ -152,7 +198,8 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   WAV_init();
-  lsm303dlhc_init(hi2c1);
+  MP45DT02_init();
+  LSM303DLHC_init(hi2c1);
   uint32_t tilt_debounce_time = HAL_GetTick();
   while (1)
   {
@@ -160,6 +207,7 @@ int main(void)
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
+    RECORDER_process();
 	WAV_process();
 	if(100 < HAL_GetTick() - tilt_debounce_time){
 		handle_tilt_sensor();
@@ -212,7 +260,7 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_I2S;
-  PeriphClkInitStruct.PLLI2S.PLLI2SN = 141;
+  PeriphClkInitStruct.PLLI2S.PLLI2SN = 128;
   PeriphClkInitStruct.PLLI2S.PLLI2SM = 5;
   PeriphClkInitStruct.PLLI2S.PLLI2SR = 2;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
@@ -236,9 +284,33 @@ static void MX_NVIC_Init(void)
   /* EXTI0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(EXTI0_IRQn, 2, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
-  /* EXTI4_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(EXTI4_IRQn, 2, 0);
-  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+}
+
+/**
+  * @brief CRC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_CRC_Init(void)
+{
+
+  /* USER CODE BEGIN CRC_Init 0 */
+
+  /* USER CODE END CRC_Init 0 */
+
+  /* USER CODE BEGIN CRC_Init 1 */
+
+  /* USER CODE END CRC_Init 1 */
+  hcrc.Instance = CRC;
+  if (HAL_CRC_Init(&hcrc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  __HAL_CRC_DR_RESET(&hcrc);
+  /* USER CODE BEGIN CRC_Init 2 */
+
+  /* USER CODE END CRC_Init 2 */
+
 }
 
 /**
@@ -276,6 +348,40 @@ static void MX_I2C1_Init(void)
 }
 
 /**
+  * @brief I2S2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2S2_Init(void)
+{
+
+  /* USER CODE BEGIN I2S2_Init 0 */
+
+  /* USER CODE END I2S2_Init 0 */
+
+  /* USER CODE BEGIN I2S2_Init 1 */
+
+  /* USER CODE END I2S2_Init 1 */
+  hi2s2.Instance = SPI2;
+  hi2s2.Init.Mode = I2S_MODE_MASTER_RX;
+  hi2s2.Init.Standard = I2S_STANDARD_PHILIPS;
+  hi2s2.Init.DataFormat = I2S_DATAFORMAT_16B;
+  hi2s2.Init.MCLKOutput = I2S_MCLKOUTPUT_ENABLE;
+  hi2s2.Init.AudioFreq = I2S_AUDIOFREQ_8K;
+  hi2s2.Init.CPOL = I2S_CPOL_LOW;
+  hi2s2.Init.ClockSource = I2S_CLOCK_PLL;
+  hi2s2.Init.FullDuplexMode = I2S_FULLDUPLEXMODE_DISABLE;
+  if (HAL_I2S_Init(&hi2s2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2S2_Init 2 */
+
+  /* USER CODE END I2S2_Init 2 */
+
+}
+
+/**
   * @brief I2S3 Initialization Function
   * @param None
   * @retval None
@@ -295,7 +401,7 @@ static void MX_I2S3_Init(void)
   hi2s3.Init.Standard = I2S_STANDARD_PHILIPS;
   hi2s3.Init.DataFormat = I2S_DATAFORMAT_16B;
   hi2s3.Init.MCLKOutput = I2S_MCLKOUTPUT_ENABLE;
-  hi2s3.Init.AudioFreq = I2S_AUDIOFREQ_44K;
+  hi2s3.Init.AudioFreq = I2S_AUDIOFREQ_16K;
   hi2s3.Init.CPOL = I2S_CPOL_LOW;
   hi2s3.Init.ClockSource = I2S_CLOCK_PLL;
   hi2s3.Init.FullDuplexMode = I2S_FULLDUPLEXMODE_DISABLE;
@@ -363,6 +469,11 @@ static void MX_DMA_Init(void)
   /* DMA controller clock enable */
   __HAL_RCC_DMA1_CLK_ENABLE();
 
+  /* DMA interrupt init */
+  /* DMA1_Stream3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
+
 }
 
 /**
@@ -375,12 +486,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
@@ -388,12 +498,6 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15
                           |GPIO_PIN_4, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin : PE4 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PC0 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;

@@ -22,7 +22,7 @@ typedef enum{
 	LSM303DLHC_TILT_RIGHT
 } LSM303DLHC_TILT;
 
-void lsm303dlhc_init(I2C_HandleTypeDef hi2c1);
-uint8_t lsm303dlhc_should_handle_interrupt(void);
-LSM303DLHC_INTERRUPT_STATE lsm303dlhc_get_interrupt_state(void);
-LSM303DLHC_TILT lsm303dlhc_get_tilt(void);
+void LSM303DLHC_init(I2C_HandleTypeDef hi2c1);
+uint8_t LSM303DLHC_should_handle_interrupt(void);
+LSM303DLHC_INTERRUPT_STATE LSM303DLHC_get_interrupt_state(void);
+LSM303DLHC_TILT LSM303DLHC_get_tilt(void);
