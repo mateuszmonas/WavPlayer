@@ -18,6 +18,7 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include <RECORDER.h>
 #include "main.h"
 #include "fatfs.h"
 #include "pdm2pcm.h"
@@ -29,7 +30,6 @@
 #include "LSM303DLHC.h"
 #include "MP45DT02.h"
 #include "CS43L22.h"
-#include "RECOREDER.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

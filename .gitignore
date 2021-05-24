@@ -11,6 +11,8 @@ Core/Inc/*
 !Core/Inc/CS43L22.h
 !Core/Inc/main.h
 !Core/Inc/LSM303DLHC.h
+!Core/Inc/RECORDER.h
+!Core/Inc/MP45DT02.h
 
 !Core/Src/
 Core/Src/*
@@ -19,6 +21,8 @@ Core/Src/*
 !Core/Src/CS43L22.c
 !Core/Src/main.c
 !Core/Src/LSM303DLHC.c
+!Core/Src/RECORDER.c
+!Core/Src/MP45DT02.c
 
 !USB_HOST/
 USB_HOST/*
