@@ -45,30 +45,19 @@ void USB_open_next_file(void){
 }
 
 void USB_create_wav_file_for_writing(void){
-	FRESULT result;
 	f_close(&current_reading_file);
-	while((result = f_open(&current_writing_file, "recording.wav", FA_WRITE | FA_CREATE_ALWAYS)) != FR_OK) {
-		int error = f_error(&current_writing_file);
+	while(f_open(&current_writing_file, "recording.wav", FA_WRITE | FA_CREATE_ALWAYS) != FR_OK) {
 		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
 	}
 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
 }
 
 void USB_write_current_file(uint8_t *buffer, uint32_t buffer_size){
-	uint bytes_written;
-	FRESULT result;
-	if((result = f_write(&current_writing_file, buffer, buffer_size, &bytes_written)) != FR_OK) {
-		int error = f_error(&current_writing_file);
-		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
-	}
+	f_write(&current_writing_file, buffer, buffer_size, NULL);
 }
 
 void USB_close_wav_file_for_writing(void){
-	FRESULT result;
-	if((result = f_close(&current_writing_file)) != FR_OK) {
-		int error = f_error(&current_writing_file);
-		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
-	}
+	f_close(&current_writing_file);
 }
 
 uint8_t USB_mounted(void){
